@@ -1,0 +1,16 @@
+[
+  {
+    "title": "Clean Code",
+    "author": "Robert C. Martin",
+    "isbn": "9780132350884",
+    "topic": "BACKEND",
+    "totalPages": 464
+  },
+  {
+    "title": "Design Patterns",
+    "author": "Gang of Four",
+    "isbn": "9780201633610",
+    "topic": "ARCHITECTURE",
+    "totalPages": 395
+  }
+]

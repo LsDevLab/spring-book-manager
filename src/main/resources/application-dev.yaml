@@ -1,0 +1,17 @@
+# Dev profile — Postgres connection for local development
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: dev
+    password: secret
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    # Prints every SQL Hibernate generates — useful for learning, disable in production
+    show-sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379

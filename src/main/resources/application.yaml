@@ -1,0 +1,20 @@
+# Shared config — applies to all profiles
+server:
+  port: 8081
+
+#spring:
+#  profiles:
+#    active: dev
+
+spring:
+  cache:
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=10m
+    redis:
+      time-to-live: 30m
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,scheduledtasks,caches
