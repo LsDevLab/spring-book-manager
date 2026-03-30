@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -78,6 +79,7 @@ public class BookController {
     // ── CREATE ────────────────────────────────────────────────
     // Approach: manual DTO conversion (dto.toEntity() / fromEntity())
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BookResponseDTO> createBook(@RequestBody @Valid BookRequestDTO dto){
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BookResponseDTO.fromEntity(bookService.createBook(dto.toEntity())));
@@ -87,6 +89,7 @@ public class BookController {
     // Approach: MapStruct mapper (bookMapper.toEntity() / toResponseDTO())
     // Error handling: try/catch in controller (vs @ControllerAdvice used in DELETE)
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BookResponseDTO> updateBook(@PathVariable UUID id, @RequestBody @Valid BookRequestDTO dto){
         return ResponseEntity.ok(
                 bookMapper.toResponseDTO(bookService.updateBook(id, bookMapper.toEntity(dto)))
@@ -97,6 +100,7 @@ public class BookController {
     // Error handling: no try/catch — BookNotFoundException caught by
     // @ControllerAdvice (GlobalExceptionHandler) which returns 404 automatically
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteBook(@PathVariable UUID id) {
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();

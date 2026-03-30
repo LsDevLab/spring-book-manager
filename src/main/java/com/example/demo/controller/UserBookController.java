@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/user/{userId}/books")
+@PreAuthorize("hasRole('ADMIN') or authentication.details.userId.equals(#userId)")
 @RequiredArgsConstructor
 class UserBookController {
 

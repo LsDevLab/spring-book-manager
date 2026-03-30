@@ -1,6 +1,7 @@
 package com.example.demo.security;
 
 import com.example.demo.model.Role;
+import com.example.demo.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -29,11 +30,13 @@ public class JwtTokenProvider {
     }
 
     // Builds a signed JWT with username as subject and role as a custom claim
-    public String generateToken(String username, Role role) {
+    public String generateToken(User user, Role role) {
         Date now = new Date();
         return Jwts.builder()
-                .subject(username)
+                .subject(user.getUsername())
                 .claim("role", role.name())
+                .claim("userId", user.getId().toString())
+                .claim("email", user.getEmail())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expiration.toMillis()))
                 .signWith(signingKey)
@@ -45,9 +48,17 @@ public class JwtTokenProvider {
         return parseClaims(token).getSubject();
     }
 
+    public String extractEmail(String token) {
+        return parseClaims(token).get("email", String.class);
+    }
+
     // Extracts the role claim from a token
     public Role extractRole(String token) {
         return Role.valueOf(parseClaims(token).get("role", String.class));
+    }
+
+    public String extractUserId(String token) {
+        return parseClaims(token).get("userId", String.class);
     }
 
     // Returns true if the token is valid and not expired
@@ -58,6 +69,11 @@ public class JwtTokenProvider {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    // Returns all claims from the token in a single parse.
+    public Claims extractAllClaims(String token) {
+        return parseClaims(token);
     }
 
     // Parses and verifies the token signature + expiration in one step.

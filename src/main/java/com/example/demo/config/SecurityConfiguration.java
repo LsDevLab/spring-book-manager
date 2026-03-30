@@ -23,14 +23,18 @@ class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-            .csrf(AbstractHttpConfigurer::disable)                      // no CSRF for stateless REST API
+            .csrf(AbstractHttpConfigurer::disable)                              // no CSRF for stateless REST API
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )  // no sessions — JWT only
+            )                                                                   // no sessions — JWT only
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()          // login/register open
-                .requestMatchers("/actuator/**").permitAll()          // monitorin gopen
-                .anyRequest().authenticated()                           // everything else requires auth
+                .requestMatchers(
+                        "/api/auth/**",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
+                ).permitAll()
+                .anyRequest().authenticated()                                   // everything else requires auth
             )
             .addFilterBefore(
                 jwtAuthenticationFilter,

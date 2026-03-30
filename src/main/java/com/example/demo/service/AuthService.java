@@ -43,7 +43,7 @@ public class AuthService {
                     dto.getEmail()
             );
             if(passwordEncoder.matches(dto.getPassword(), user.getPassword())){
-                return new LoginResponseDTO(jwtTokenProvider.generateToken(user.getUsername(), user.getRole()));
+                return new LoginResponseDTO(jwtTokenProvider.generateToken(user, user.getRole()));
             } else {
                 throw new WrongCredentialsException();
             }

@@ -2,11 +2,12 @@
 server:
   port: 8081
 
-#spring:
-#  profiles:
-#    active: dev
+
 
 spring:
+  profiles:
+    active: dev
+
   cache:
     caffeine:
       spec: maximumSize=100,expireAfterWrite=10m
@@ -22,4 +23,11 @@ management:
     web:
       exposure:
         include: health,info,metrics,scheduledtasks,caches
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
 

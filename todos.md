@@ -113,17 +113,17 @@ A REST API where developers can manage their technical reading list — add book
 ## Phase 10 — Authentication & Authorization
 > Secure the API with Spring Security and JWT-based stateless authentication
 
-- [ ] **10.1 Add Spring Security + JWT dependencies** — Add spring-boot-starter-security, jjwt library, and configure a basic SecurityFilterChain that permits auth endpoints and secures everything else *(depends on 3.1)*
+- [x] **10.1 Add Spring Security + JWT dependencies** — Add spring-boot-starter-security, jjwt library, and configure a basic SecurityFilterChain that permits auth endpoints and secures everything else *(depends on 3.1)*
     - `Spring Security` `SecurityFilterChain` `HttpSecurity` `authorizeHttpRequests`
-- [ ] **10.2 Password hashing & User entity update** — Add `password` and `role` (enum: `USER`, `ADMIN`) fields to the User entity, hash passwords with BCrypt on registration *(depends on 10.1)*
+- [x] **10.2 Password hashing & User entity update** — Add `password` and `role` (enum: `USER`, `ADMIN`) fields to the User entity, hash passwords with BCrypt on registration *(depends on 10.1)*
     - `BCryptPasswordEncoder` `@Entity` `enum Role`
-- [ ] **10.3 Register endpoint** — POST /api/auth/register — create a new user with hashed password and default role USER *(depends on 10.2)*
+- [x] **10.3 Register endpoint** — POST /api/auth/register — create a new user with hashed password and default role USER *(depends on 10.2)*
     - `@PostMapping` `@Valid` `BCryptPasswordEncoder` `DTO pattern`
-- [ ] **10.4 Login endpoint + JWT generation** — POST /api/auth/login — authenticate credentials and return a signed JWT token *(depends on 10.3)*
+- [x] **10.4 Login endpoint + JWT generation** — POST /api/auth/login — authenticate credentials and return a signed JWT token *(depends on 10.3)*
     - `AuthenticationManager` `UsernamePasswordAuthenticationToken` `JwtTokenProvider` `HMAC signing`
-- [ ] **10.5 JWT authentication filter** — Implement a OncePerRequestFilter that reads the Authorization header, validates the JWT, and sets the SecurityContext *(depends on 10.4)*
+- [x] **10.5 JWT authentication filter** — Implement a OncePerRequestFilter that reads the Authorization header, validates the JWT, and sets the SecurityContext *(depends on 10.4)*
     - `OncePerRequestFilter` `JwtAuthenticationFilter` `SecurityContextHolder` `UserDetailsService`
-- [ ] **10.6 Get current user endpoint** — GET /api/auth/me — return profile of the authenticated user *(depends on 10.5)*
+- [x] **10.6 Get current user endpoint** — GET /api/auth/me — return profile of the authenticated user *(depends on 10.5)*
     - `@AuthenticationPrincipal` `SecurityContextHolder`
-- [ ] **10.7 Role-based access control** — Restrict /api/admin/** endpoints to ADMIN role, ensure users can only access their own reading list *(depends on 10.6)*
+- [x] **10.7 Role-based access control** — Restrict /api/admin/** endpoints to ADMIN role, ensure users can only access their own reading list *(depends on 10.6)*
     - `@PreAuthorize` `@EnableMethodSecurity` `hasRole('ADMIN')` `ownership check`
