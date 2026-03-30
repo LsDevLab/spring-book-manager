@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +35,14 @@ import java.util.UUID;
 class UserController {
 
     private final UserService userService;
+
+    // GET /api/users/me — returns the currently authenticated user's profile
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> me(@AuthenticationPrincipal String username){
+        return ResponseEntity.ok(
+                UserResponseDTO.fromEntity(userService.getUserByUsername(username))
+        );
+    }
 
     /**
      * GET /api/users — returns all users.

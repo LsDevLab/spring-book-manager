@@ -42,6 +42,20 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException(id));
     }
 
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+    }
+
+    public User getUserByUsernameOrEmail(String username, String email) {
+        return userRepository.findByUsernameOrEmail(username, email)
+                .orElseThrow(() -> new UserNotFoundException(username, email));
+    }
+
+    public boolean userExistsByUsernameOrEmail(String username, String email) {
+        return userRepository.existsByUsernameOrEmail(username, email);
+    }
+
     public User createUser(User user) {
         return userRepository.save(user);
     }

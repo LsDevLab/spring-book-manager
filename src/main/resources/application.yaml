@@ -13,8 +13,13 @@ spring:
     redis:
       time-to-live: 30m
 
+jwt:
+  secret: your-256-bit-secret-key-here-make-it-long-enough-for-hmac
+  expiration: 24h
+
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics,scheduledtasks,caches
+
