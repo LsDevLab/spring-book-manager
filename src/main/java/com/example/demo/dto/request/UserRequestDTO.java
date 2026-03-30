@@ -1,8 +1,7 @@
 package com.example.demo.dto.request;
 
-import com.example.demo.model.Book;
 import com.example.demo.model.User;
-import jakarta.persistence.Column;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -18,14 +17,17 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Schema(description = "Request body for creating or updating a user")
 public class UserRequestDTO {
 
     @NotBlank
     @Size(min = 3, max = 50)
+    @Schema(description = "Username (3-50 characters)", example = "john_doe")
     private String username;
 
     @NotBlank
     @Email
+    @Schema(description = "Valid email address", example = "john@example.com")
     private String email;
 
     public User toEntity() {

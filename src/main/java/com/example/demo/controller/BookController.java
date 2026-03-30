@@ -6,6 +6,11 @@ import com.example.demo.dto.response.BookResponseDTO;
 import com.example.demo.model.Topic;
 import com.example.demo.service.BookService;
 import com.example.demo.service.UserBookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +27,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
+@Tag(name = "Books", description = "Book catalog management")
+@SecurityRequirement(name = "bearerAuth")
 public class BookController {
 
     private final BookService bookService;
@@ -31,6 +38,8 @@ public class BookController {
     // ── GET ALL ───────────────────────────────────────────────
     // Approach: manual DTO conversion with stream + method reference
     @GetMapping
+    @Operation(summary = "List all books")
+    @ApiResponse(responseCode = "200", description = "List of all books returned")
     public ResponseEntity<List<BookResponseDTO>> getAllBooks(){
         return ResponseEntity.ok(
                 bookService.getAllBooks().stream()
@@ -56,7 +65,10 @@ public class BookController {
      * @return 200 OK with paginated response
      */
     @GetMapping("/search")
+    @Operation(summary = "Search books with pagination", description = "Paginated and sortable book list with optional topic filter")
+    @ApiResponse(responseCode = "200", description = "Paginated book results")
     public ResponseEntity<Page<BookResponseDTO>> searchBooks(
+            @Parameter(description = "Filter by topic", required = false)
             @RequestParam(required = false) Topic topic,
             Pageable pageable
     ) {
@@ -69,6 +81,9 @@ public class BookController {
     // ── GET BY ID ─────────────────────────────────────────────
     // Approach: manual DTO conversion, Optional chaining
     @GetMapping("/{id}")
+    @Operation(summary = "Get a book by ID")
+    @ApiResponse(responseCode = "200", description = "Book found")
+    @ApiResponse(responseCode = "404", description = "Book not found")
     public ResponseEntity<BookResponseDTO> getBookById(@PathVariable UUID id) {
         return bookService.getBookById(id)
                 .map(BookResponseDTO::fromEntity)
@@ -80,6 +95,10 @@ public class BookController {
     // Approach: manual DTO conversion (dto.toEntity() / fromEntity())
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create a new book (ADMIN)")
+    @ApiResponse(responseCode = "201", description = "Book created")
+    @ApiResponse(responseCode = "400", description = "Validation failed")
+    @ApiResponse(responseCode = "403", description = "Not authorized — ADMIN role required")
     public ResponseEntity<BookResponseDTO> createBook(@RequestBody @Valid BookRequestDTO dto){
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BookResponseDTO.fromEntity(bookService.createBook(dto.toEntity())));
@@ -90,6 +109,10 @@ public class BookController {
     // Error handling: try/catch in controller (vs @ControllerAdvice used in DELETE)
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update a book (ADMIN)")
+    @ApiResponse(responseCode = "200", description = "Book updated")
+    @ApiResponse(responseCode = "404", description = "Book not found")
+    @ApiResponse(responseCode = "403", description = "Not authorized — ADMIN role required")
     public ResponseEntity<BookResponseDTO> updateBook(@PathVariable UUID id, @RequestBody @Valid BookRequestDTO dto){
         return ResponseEntity.ok(
                 bookMapper.toResponseDTO(bookService.updateBook(id, bookMapper.toEntity(dto)))
@@ -101,6 +124,10 @@ public class BookController {
     // @ControllerAdvice (GlobalExceptionHandler) which returns 404 automatically
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete a book (ADMIN)")
+    @ApiResponse(responseCode = "204", description = "Book deleted")
+    @ApiResponse(responseCode = "404", description = "Book not found")
+    @ApiResponse(responseCode = "403", description = "Not authorized — ADMIN role required")
     public ResponseEntity<Void> deleteBook(@PathVariable UUID id) {
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();
@@ -123,7 +150,12 @@ public class BookController {
     //   @ControllerAdvice: GlobalExceptionHandler catches BookNotFoundException (see DELETE)
 
     @GetMapping("/recommendations")
-    public ResponseEntity<Page<BookResponseDTO>> getMostReadBooksByTopic(@RequestParam Topic topic, Pageable pageable){
+    @Operation(summary = "Get most read books by topic", description = "Returns books ranked by number of readers for a given topic")
+    @ApiResponse(responseCode = "200", description = "Paginated recommendations returned")
+    public ResponseEntity<Page<BookResponseDTO>> getMostReadBooksByTopic(
+            @Parameter(description = "Topic to get recommendations for", required = true)
+            @RequestParam Topic topic,
+            Pageable pageable){
         return ResponseEntity.ok(
                 userBookService.getMostReadBookByTopic(topic, pageable)
                     .map(BookResponseDTO::fromEntity)

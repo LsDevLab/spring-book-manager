@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.request.BookRequestDTO;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import java.util.List;
 // In production this would be replaced by calling a real external API (e.g. Open Library).
 @RestController
 @RequestMapping("/api/mock")
+@Hidden // Excluded from Swagger — internal mock endpoint, not part of the public API
 public class MockController {
 
     private final JsonMapper jsonMapper = JsonMapper.builder().build();

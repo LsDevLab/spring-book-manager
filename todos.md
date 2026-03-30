@@ -127,3 +127,77 @@ A REST API where developers can manage their technical reading list — add book
     - `@AuthenticationPrincipal` `SecurityContextHolder`
 - [x] **10.7 Role-based access control** — Restrict /api/admin/** endpoints to ADMIN role, ensure users can only access their own reading list *(depends on 10.6)*
     - `@PreAuthorize` `@EnableMethodSecurity` `hasRole('ADMIN')` `ownership check`
+
+---
+
+## Phase 11 — API Documentation
+> Auto-generated interactive docs and collection export
+
+- [x] **11.1 Add SpringDoc OpenAPI** — Add springdoc-openapi dependency, expose Swagger UI and OpenAPI JSON spec *(depends on 10.7)*
+    - `springdoc-openapi` `Swagger UI` `/v3/api-docs` `/swagger-ui.html`
+- [x] **11.2 Annotate controllers with Swagger annotations** — Add @Tag, @Operation, @ApiResponse, @Parameter to all endpoints *(depends on 11.1)*
+    - `@Tag` `@Operation` `@ApiResponse` `@Parameter` `@SecurityRequirement`
+- [x] **11.3 Annotate DTOs with @Schema** — Add descriptions and examples to all request/response DTO fields *(depends on 11.2)*
+    - `@Schema` `example values` `description`
+- [x] **11.4 Configure JWT auth in Swagger** — Add @OpenAPIDefinition and @SecurityScheme so the Authorize button works in Swagger UI *(depends on 11.2)*
+    - `@OpenAPIDefinition` `@SecurityScheme` `SecuritySchemeType.HTTP` `bearerFormat`
+- [x] **11.5 Postman collection setup** — Import OpenAPI spec into Postman, configure environment variables (baseUrl, token, userId) with auto-token script *(depends on 11.1)*
+    - `Postman import` `environment variables` `post-response scripts`
+
+---
+
+## Phase 12 — JPA Specifications
+> Dynamic, composable queries — filter by any combination of fields without writing a new method for each one
+
+- [ ] **12.1 Extend BookRepository with JpaSpecificationExecutor** — One-line change that unlocks Specification-based queries *(depends on 4.2)*
+    - `JpaSpecificationExecutor<Book>` `Specification<T>`
+- [ ] **12.2 Create BookSpecifications utility class** — Static methods returning reusable Specification lambdas: titleContains, authorContains, hasTopic, minPages, maxPages *(depends on 12.1)*
+    - `Specification<Book>` `CriteriaBuilder` `Root<Book>` `Predicate` `lambda composition`
+- [ ] **12.3 Create BookSearchDTO** — DTO with all optional filter fields, bound from query params. All nullable — only non-null fields become active filters *(depends on 12.2)*
+    - `@RequestParam binding` `nullable fields` `partial filter pattern`
+- [ ] **12.4 Build dynamic queries in BookService** — Chain non-null Specifications with .and(), pass to findAll(Specification, Pageable) *(depends on 12.2, 12.3)*
+    - `Specification.where()` `.and()` `.or()` `dynamic composition`
+- [ ] **12.5 Update search endpoint** — Refactor GET /api/books/search to accept BookSearchDTO. Clients can now filter by any combination: ?title=clean&topic=BACKEND&minPages=100 *(depends on 12.4)*
+    - `composable filters` `multi-criteria search` `Swagger docs update`
+
+---
+
+## Phase 13 — Advanced Redis
+> Go beyond simple caching — rate limiting, pub/sub, distributed locking
+
+- [ ] **13.1 Rate limiting with Redis** — Store request counts per user with TTL, return 429 Too Many Requests when exceeded *(depends on 6.3, 10.5)*
+    - `RedisTemplate` `increment` `expire` `TTL` `HandlerInterceptor` `429 status`
+- [ ] **13.2 Redis pub/sub for events** — Publish BookCompletedEvent to a Redis channel, subscribe and react in real-time. Compare with the ApplicationEventPublisher approach *(depends on 8.2, 6.3)*
+    - `RedisMessageListenerContainer` `MessageListener` `RedisTemplate.convertAndSend` `pub/sub pattern`
+- [ ] **13.3 Distributed locking with Redisson** — Prevent concurrent modifications to the same reading list entry *(depends on 13.1)*
+    - `Redisson` `RLock` `tryLock` `distributed lock pattern` `optimistic vs pessimistic`
+
+---
+
+## Phase 14 — Keycloak Integration
+> Replace hand-rolled JWT auth with a production-grade identity provider
+
+- [ ] **14.1 Set up Keycloak with Docker** — Run Keycloak container, create a realm, define client, and configure roles (USER, ADMIN) via the admin console *(depends on 10.7)*
+    - `Keycloak` `Docker Compose` `realm` `client` `roles` `OIDC`
+- [ ] **14.2 Configure Spring as OAuth2 Resource Server** — Replace custom JwtAuthenticationFilter with spring-boot-starter-oauth2-resource-server, validate Keycloak-issued tokens *(depends on 14.1)*
+    - `spring-boot-starter-oauth2-resource-server` `JwtDecoder` `issuer-uri` `jwk-set-uri`
+- [ ] **14.3 Map Keycloak roles to Spring Security authorities** — Extract realm/client roles from the JWT claims and convert to GrantedAuthority so @PreAuthorize still works *(depends on 14.2)*
+    - `JwtAuthenticationConverter` `granted authorities mapper` `realm_access` `resource_access`
+- [ ] **14.4 Remove custom auth code** — Delete AuthController, JwtTokenProvider, JwtAuthenticationFilter, AuthUserDetails. Registration and login are now handled by Keycloak *(depends on 14.3)*
+    - `code cleanup` `separation of concerns` `externalized auth`
+
+---
+
+## Phase 15 — GraphQL
+> Expose a GraphQL endpoint alongside REST — clients query exactly the fields they need
+
+- [ ] **15.1 Add Spring GraphQL starter** — Add spring-boot-starter-graphql, create the .graphqls schema file with Book, User, UserBook types *(depends on 3.2)*
+    - `spring-boot-starter-graphql` `SDL schema` `type` `Query` `Mutation`
+- [ ] **15.2 Book queries and mutations** — Implement @QueryMapping for books (list, byId, search) and @MutationMapping for create/update/delete *(depends on 15.1)*
+    - `@QueryMapping` `@MutationMapping` `@Argument` `DataFetcher`
+- [ ] **15.3 Reading list queries with nested types** — Query a user's reading list with nested book details, let the client choose which fields to fetch *(depends on 15.2)*
+    - `nested types` `@SchemaMapping` `N+1 problem` `@BatchMapping`
+- [ ] **15.4 Secure GraphQL with Spring Security** — Apply authentication and role-based authorization to GraphQL operations *(depends on 15.3, 10.7)*
+    - `@PreAuthorize on GraphQL` `SecurityContext in GraphQL` `query-level vs field-level auth`
+- [ ] **15.5 GraphiQL playground** — Enable the built-in GraphiQL UI for interactive query testing *(depends on 15.1)*
+    - `spring.graphql.graphiql.enabled` `GraphiQL` `introspection`

@@ -4,6 +4,7 @@ import com.example.demo.dto.response.ErrorResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -68,6 +69,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleUserAlreadyExists(UserAlreadyExistsException ex) {
         ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(WrongCredentialsException.class)
+    public ResponseEntity<ErrorResponseDTO> handleWrongCredentials(WrongCredentialsException ex) {
+        ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAccessDenied(AccessDeniedException ex) {
+        ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.FORBIDDEN.value(), "Access denied");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     /** Catch-all for unhandled exceptions → 500 Internal Server Error. */
