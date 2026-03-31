@@ -48,22 +48,6 @@ public class BookController {
         );
     }
 
-    /**
-     * GET /api/books/search — paginated and sortable book list.
-     *
-     * <p>Spring automatically binds query params to the Pageable parameter:</p>
-     * <ul>
-     *   <li>{@code ?page=0} — page number (0-based)</li>
-     *   <li>{@code ?size=10} — items per page</li>
-     *   <li>{@code ?sort=title,asc} — sort by field and direction</li>
-     * </ul>
-     *
-     * <p>The returned Page object includes metadata: totalElements, totalPages,
-     * number (current page), size, first, last — all serialized into the JSON response.</p>
-     *
-     * @param pageable injected by Spring from query params
-     * @return 200 OK with paginated response
-     */
     @GetMapping("/search")
     @Operation(summary = "Search books with pagination", description = "Paginated and sortable book list with optional topic filter")
     @ApiResponse(responseCode = "200", description = "Paginated book results")

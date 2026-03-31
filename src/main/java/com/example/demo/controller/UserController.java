@@ -20,19 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * REST controller for User CRUD operations.
- *
- * <h3>Endpoints:</h3>
- * <table>
- *   <tr><th>Method</th><th>Path</th><th>Description</th></tr>
- *   <tr><td>GET</td><td>/api/users</td><td>List all users</td></tr>
- *   <tr><td>GET</td><td>/api/users/{id}</td><td>Get user by ID</td></tr>
- *   <tr><td>POST</td><td>/api/users</td><td>Create a new user</td></tr>
- *   <tr><td>PUT</td><td>/api/users/{id}</td><td>Update a user</td></tr>
- *   <tr><td>DELETE</td><td>/api/users/{id}</td><td>Delete a user</td></tr>
- * </table>
- */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -52,11 +39,6 @@ class UserController {
         );
     }
 
-    /**
-     * GET /api/users — returns all users.
-     *
-     * @return 200 OK with list of {@link UserResponseDTO}
-     */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "List all users (ADMIN)")
@@ -83,11 +65,6 @@ class UserController {
         );
     }
 
-    /**
-     * GET /api/users/{id} — returns a single user.
-     *
-     * @return 200 OK with {@link UserResponseDTO}, or 404 if not found
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get a user by ID (ADMIN)")
@@ -98,12 +75,6 @@ class UserController {
         return ResponseEntity.ok(UserResponseDTO.fromEntity(userService.getUserById(id)));
     }
 
-    /**
-     * POST /api/users — creates a new user.
-     *
-     * @param dto validated request body (username 3–50 chars, valid email)
-     * @return 201 Created with {@link UserResponseDTO}
-     */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new user (ADMIN)")
@@ -115,11 +86,6 @@ class UserController {
                 .body(UserResponseDTO.fromEntity(userService.createUser(dto.toEntity())));
     }
 
-    /**
-     * PUT /api/users/{id} — fully replaces a user's data.
-     *
-     * @return 200 OK with updated {@link UserResponseDTO}, or 404 if not found
-     */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update a user (ADMIN)")
@@ -131,11 +97,6 @@ class UserController {
                 .body(UserResponseDTO.fromEntity(userService.updateUser(id, dto.toEntity())));
     }
 
-    /**
-     * DELETE /api/users/{id} — deletes a user.
-     *
-     * @return 204 No Content, or 404 if not found
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a user (ADMIN)")
