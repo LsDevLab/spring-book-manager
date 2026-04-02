@@ -1,8 +1,11 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.request.SimplePageable;
 import com.example.demo.dto.request.UserBookUpdateDTO;
+import com.example.demo.dto.response.SimplePage;
 import com.example.demo.dto.response.UserStatsDTO;
 import com.example.demo.event.BookCompletedEvent;
+import com.example.demo.exception.BookAlreadyInReadingList;
 import com.example.demo.exception.BookNotFoundException;
 import com.example.demo.exception.UserBookNotFoundException;
 import com.example.demo.exception.UserNotFoundException;
@@ -20,6 +23,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.cache.RedisCacheManager;
@@ -98,7 +102,12 @@ public class UserBookService {
             cache.clear();  // clears all entries in the "recommendations" cache
         }
 
-        return userBookRepository.save(newUserBook);
+        try {
+            return userBookRepository.saveAndFlush(newUserBook);
+        } catch (DataIntegrityViolationException ex){
+           throw new BookAlreadyInReadingList(user, book);
+        }
+
     }
 
     /**
@@ -203,9 +212,15 @@ public class UserBookService {
         );
     }
 
-    @Cacheable(value = "recommendations", key = "#topic + '-' + #pageable.pageNumber + '-' + #pageable.pageSize", cacheManager = "redisCacheManager")
-    public Page<Book> getMostReadBookByTopic(Topic topic, Pageable pageable){
-        return userBookRepository.getMostReadBookByTopic(topic, pageable);
+    // Returns a SimplePage<Book> — our own DTO with only page/size/totalElements/totalPages.
+    // This is what gets cached in Redis. Unlike Page/PageImpl, SimplePage is a plain POJO
+    // that Jackson can serialize and deserialize without issues (no @JsonCreator tricks needed).
+    //
+    // Flow: SimplePageable → Pageable → repository query → Page<Book> → SimplePage<Book> → Redis cache
+    @Cacheable(value = "recommendations", key = "#topic + '-' + #simplePageable.page + '-' + #simplePageable.size", cacheManager = "redisCacheManager")
+    public SimplePage<Book> getMostReadBookByTopic(Topic topic, SimplePageable simplePageable){
+        Page<Book> page = userBookRepository.getMostReadBookByTopic(topic, simplePageable.toPageable());
+        return SimplePage.from(page);
     }
 
 

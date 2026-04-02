@@ -24,7 +24,7 @@ import java.util.UUID;
  * <p>Introduced in Phase 3.2.</p>
  */
 @Entity
-@Table(name = "user_book")
+@Table(name = "user_book", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "book_id"}))
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

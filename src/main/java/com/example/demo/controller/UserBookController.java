@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.request.UserBookUpdateDTO;
 import com.example.demo.dto.response.UserBookResponseDTO;
 import com.example.demo.dto.response.UserStatsDTO;
+import com.example.demo.interceptor.RateLimit;
 import com.example.demo.service.UserBookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -59,6 +60,7 @@ class UserBookController {
     }
 
     @PostMapping("/{bookId}")
+    @RateLimit(maxRequests = 1, windowSeconds = 30)
     @Operation(summary = "Add a book to the reading list")
     @ApiResponse(responseCode = "201", description = "Book added to reading list")
     @ApiResponse(responseCode = "403", description = "Not authorized — can only modify own reading list")

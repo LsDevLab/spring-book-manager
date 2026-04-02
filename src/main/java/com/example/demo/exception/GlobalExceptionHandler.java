@@ -83,6 +83,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponseDTO> handleRateLimitsExceeded(RateLimitExceededException ex) {
+        ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.TOO_MANY_REQUESTS.value(), "Rate limits exceeded: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(body);
+    }
+
+    @ExceptionHandler(BookAlreadyInReadingList.class)
+    public ResponseEntity<ErrorResponseDTO> handleBookAlreadyInReadingList(BookAlreadyInReadingList ex) {
+        ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.CONFLICT.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
     /** Catch-all for unhandled exceptions → 500 Internal Server Error. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneral(Exception ex) {

@@ -165,7 +165,7 @@ A REST API where developers can manage their technical reading list — add book
 ## Phase 13 — Advanced Redis
 > Go beyond simple caching — rate limiting, pub/sub, distributed locking
 
-- [ ] **13.1 Rate limiting with Redis** — Store request counts per user with TTL, return 429 Too Many Requests when exceeded *(depends on 6.3, 10.5)*
+- [x] **13.1 Rate limiting with Redis** — Store request counts per user with TTL, return 429 Too Many Requests when exceeded *(depends on 6.3, 10.5)*
     - `RedisTemplate` `increment` `expire` `TTL` `HandlerInterceptor` `429 status`
 - [ ] **13.2 Redis pub/sub for events** — Publish BookCompletedEvent to a Redis channel, subscribe and react in real-time. Compare with the ApplicationEventPublisher approach *(depends on 8.2, 6.3)*
     - `RedisMessageListenerContainer` `MessageListener` `RedisTemplate.convertAndSend` `pub/sub pattern`
