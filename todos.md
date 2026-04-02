@@ -149,15 +149,15 @@ A REST API where developers can manage their technical reading list — add book
 ## Phase 12 — JPA Specifications
 > Dynamic, composable queries — filter by any combination of fields without writing a new method for each one
 
-- [ ] **12.1 Extend BookRepository with JpaSpecificationExecutor** — One-line change that unlocks Specification-based queries *(depends on 4.2)*
+- [x] **12.1 Extend BookRepository with JpaSpecificationExecutor** — One-line change that unlocks Specification-based queries *(depends on 4.2)*
     - `JpaSpecificationExecutor<Book>` `Specification<T>`
-- [ ] **12.2 Create BookSpecifications utility class** — Static methods returning reusable Specification lambdas: titleContains, authorContains, hasTopic, minPages, maxPages *(depends on 12.1)*
+- [x] **12.2 Create BookSpecifications utility class** — Static methods returning reusable Specification lambdas: titleContains, authorContains, hasTopic, minPages, maxPages *(depends on 12.1)*
     - `Specification<Book>` `CriteriaBuilder` `Root<Book>` `Predicate` `lambda composition`
-- [ ] **12.3 Create BookSearchDTO** — DTO with all optional filter fields, bound from query params. All nullable — only non-null fields become active filters *(depends on 12.2)*
+- [x] **12.3 Create BookSearchDTO** — DTO with all optional filter fields, bound from query params. All nullable — only non-null fields become active filters *(depends on 12.2)*
     - `@RequestParam binding` `nullable fields` `partial filter pattern`
-- [ ] **12.4 Build dynamic queries in BookService** — Chain non-null Specifications with .and(), pass to findAll(Specification, Pageable) *(depends on 12.2, 12.3)*
+- [x] **12.4 Build dynamic queries in BookService** — Chain non-null Specifications with .and(), pass to findAll(Specification, Pageable) *(depends on 12.2, 12.3)*
     - `Specification.where()` `.and()` `.or()` `dynamic composition`
-- [ ] **12.5 Update search endpoint** — Refactor GET /api/books/search to accept BookSearchDTO. Clients can now filter by any combination: ?title=clean&topic=BACKEND&minPages=100 *(depends on 12.4)*
+- [x] **12.5 Update search endpoint** — Refactor GET /api/books/search to accept BookSearchDTO. Clients can now filter by any combination: ?title=clean&topic=BACKEND&minPages=100 *(depends on 12.4)*
     - `composable filters` `multi-criteria search` `Swagger docs update`
 
 ---

@@ -1,10 +1,11 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.request.BookSearchDTO;
 import com.example.demo.exception.BookNotFoundException;
 import com.example.demo.model.Book;
 import com.example.demo.model.BookIsbnPolicy;
-import com.example.demo.model.Topic;
 import com.example.demo.repository.BookRepository;
+import com.example.demo.repository.specification.dtoToSpecBuilderUtil.DTOToSpecBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -31,20 +32,39 @@ public class BookService {
     }
 
     /**
-     * Returns a paginated, sortable list of books.
+     * Dynamic multi-criteria search using JPA Specifications.
      *
-     * <p>Pageable carries page number, page size, and sort direction — all parsed
-     * automatically from query params by Spring MVC.</p>
+     * <p>Builds a WHERE clause dynamically: only non-null fields in the DTO become
+     * active filters, chained with AND. If all fields are null, returns all books.</p>
      *
-     * @param topic topic filter, if null returns books with all topics
-     * @param pageable pagination/sort parameters (page, size, sort)
-     * @return a Page containing the books and metadata (totalElements, totalPages, etc.)
+     * <p>Replaces the old approach of a single {@code Topic} filter parameter —
+     * previously this method was: {@code searchBooks(Topic topic, Pageable pageable)}
+     * with an if/else that called either {@code findByTopic()} or {@code findAll()}.</p>
+     *
+     * @param bookSearchDTO filter criteria — all fields optional (null = ignored)
+     * @param pageable      pagination/sort parameters (page, size, sort)
+     * @return a Page containing matched books and metadata (totalElements, totalPages, etc.)
      */
-    public Page<Book> searchBooks(Topic topic, Pageable pageable) {
-        if (topic != null) {
-            return bookRepository.findByTopic(topic, pageable);
-        }
-        return bookRepository.findAll(pageable);
+    // Old approach — manual if/null checks for each filter field:
+    // public Page<Book> searchBooks(BookSearchDTO bookSearchDTO, Pageable pageable) {
+    //     Specification<Book> spec = Specification.unrestricted();
+    //     if (bookSearchDTO.getTitle() != null) {
+    //         spec = spec.and(BookSpecifications.titleContains(bookSearchDTO.getTitle()));
+    //     }
+    //     if (bookSearchDTO.getAuthor() != null) { ... }
+    //     if (bookSearchDTO.getTopic() != null) { ... }
+    //     ...
+    //     return bookRepository.findAll(spec, pageable);
+    // }
+    //
+    // Second approach — BookSpecifications.fromSearchDTO() with static SPEC_MAPPINGS list:
+    // public Page<Book> searchBooks(BookSearchDTO bookSearchDTO, Pageable pageable) {
+    //     return bookRepository.findAll(BookSpecifications.fromSearchDTO(bookSearchDTO), pageable);
+    // }
+    //
+    // Third approach — static utility scans @SpecFilter annotations on the DTO via reflection:
+    public Page<Book> searchBooks(BookSearchDTO bookSearchDTO, Pageable pageable) {
+        return bookRepository.findAll(DTOToSpecBuilder.buildAndSpecification(bookSearchDTO), pageable);
     }
 
     // Returns Optional<Book> — forces caller to handle "not found" case explicitly

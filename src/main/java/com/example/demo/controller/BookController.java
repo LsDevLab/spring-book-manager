@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.BookMapper;
 import com.example.demo.dto.request.BookRequestDTO;
+import com.example.demo.dto.request.BookSearchDTO;
 import com.example.demo.dto.response.BookResponseDTO;
 import com.example.demo.model.Topic;
 import com.example.demo.service.BookService;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,16 +50,21 @@ public class BookController {
         );
     }
 
+    // ── SEARCH ────────────────────────────────────────────────
+    // Query params are auto-bound to BookSearchDTO fields by Spring MVC (model attribute binding).
+    // @ModelAttribute is optional — Spring does this by default for non-annotated complex types.
+    // Only non-null fields become active filters (via JPA Specifications in the service layer).
+    // Example: GET /api/books/search?title=clean&topic=BACKEND&minPages=100
     @GetMapping("/search")
-    @Operation(summary = "Search books with pagination", description = "Paginated and sortable book list with optional topic filter")
-    @ApiResponse(responseCode = "200", description = "Paginated book results")
+    @Operation(summary = "Search books with dynamic filters",
+            description = "Paginated, sortable book search. Filter by any combination of: title, author, topic, minPages, maxPages. All filters are optional — omitted filters are ignored.")
+    @ApiResponse(responseCode = "200", description = "Paginated book results matching the filters")
     public ResponseEntity<Page<BookResponseDTO>> searchBooks(
-            @Parameter(description = "Filter by topic", required = false)
-            @RequestParam(required = false) Topic topic,
+            @ModelAttribute BookSearchDTO bookSearchDTO,
             Pageable pageable
     ) {
         return ResponseEntity.ok(
-                bookService.searchBooks(topic, pageable)
+                bookService.searchBooks(bookSearchDTO, pageable)
                         .map(BookResponseDTO::fromEntity)
         );
     }
