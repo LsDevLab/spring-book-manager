@@ -2,6 +2,7 @@ package com.example.demo.repository;
 
 import com.example.demo.model.Book;
 import com.example.demo.model.Topic;
+import com.example.demo.model.UserBook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -52,6 +52,7 @@ public class UserBookService {
     private final ApplicationEventPublisher applicationEventPublisher;
     @Resource
     private CacheManager redisCacheManager;
+    private final ReadingActivityService readingActivityService;
 
     /**
      * Returns all reading list entries for a user.
@@ -85,6 +86,11 @@ public class UserBookService {
      */
     @Transactional
     public UserBook addToReadingList(UUID userId, UUID bookId) {
+
+        if(userBookRepository.existsByUserIdAndBookId(userId, bookId)){
+            throw new BookAlreadyInReadingList();
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         Book book = bookRepository.findById(bookId)
@@ -96,18 +102,15 @@ public class UserBookService {
         newUserBook.setStatus(ReadingStatus.WANT_TO_READ);
         newUserBook.setCurrentPage(0);
 
+        UserBook userBook = userBookRepository.saveAndFlush(newUserBook);
+
         // manual evict
         Cache cache = redisCacheManager.getCache("recommendations");
         if (cache != null) {
             cache.clear();  // clears all entries in the "recommendations" cache
         }
 
-        try {
-            return userBookRepository.saveAndFlush(newUserBook);
-        } catch (DataIntegrityViolationException ex){
-           throw new BookAlreadyInReadingList(user, book);
-        }
-
+        return userBook;
     }
 
     /**
@@ -121,6 +124,9 @@ public class UserBookService {
         UserBook userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
                 .orElseThrow(() -> new UserBookNotFoundException(userId, bookId));
         userBookRepository.delete(userBook);
+
+        // Clean up Redis — user might have been actively reading this book
+        readingActivityService.stopReading(userId);
     }
 
     /**
@@ -161,6 +167,21 @@ public class UserBookService {
             userBook.setNotes(dto.getNotes());
         }
 
+        // ── Redis activity tracking ──────────────────────────────
+        // Update Redis based on the final state of the entity (after all DTO fields applied).
+        Book book = userBook.getBook();
+        User user = userBook.getUser();
+
+        if (userBook.getStatus() == ReadingStatus.READING) {
+            // Started reading or updated progress — write/refresh session in Redis
+            readingActivityService.startReading(
+                    userId, user.getUsername(), bookId,
+                    book.getTitle(), book.getTopic(), userBook.getCurrentPage());
+        } else if (userBook.getStatus() == ReadingStatus.COMPLETED) {
+            // Finished the book — remove from active readers
+            readingActivityService.stopReading(userId);
+        }
+        // WANT_TO_READ — no Redis action (not actively reading yet)
 
         return userBookRepository.save(userBook);
     }

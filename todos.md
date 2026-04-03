@@ -167,12 +167,19 @@ A REST API where developers can manage their technical reading list — add book
 
 - [x] **13.1 Rate limiting with Redis** — Store request counts per user with TTL, return 429 Too Many Requests when exceeded *(depends on 6.3, 10.5)*
     - `RedisTemplate` `increment` `expire` `TTL` `HandlerInterceptor` `429 status`
-- [ ] **13.2 Redis pub/sub for events** — Publish BookCompletedEvent to a Redis channel, subscribe and react in real-time. Compare with the ApplicationEventPublisher approach *(depends on 8.2, 6.3)*
-    - `RedisMessageListenerContainer` `MessageListener` `RedisTemplate.convertAndSend` `pub/sub pattern`
-- [ ] **13.3 Distributed locking with Redisson** — Prevent concurrent modifications to the same reading list entry *(depends on 13.1)*
-    - `Redisson` `RLock` `tryLock` `distributed lock pattern` `optimistic vs pessimistic`
-
----
+- [x] **13.2 Live reading activity with Redis data structures** — Track who's reading what in real-time using Hash, Set, and Sorted Set — no DB queries for reads *(depends on 13.1, 3.3)*
+    - `opsForHash()` `opsForSet()` `opsForZSet()` `ZINCRBY` `ZREVRANGE` `HSET` `HGETALL` `SADD` `SCARD`
+    - **13.2a** Update progress (existing PATCH) also writes session to Redis Hash + updates Sorted Set by topic
+    - **13.2b** GET /api/activity/topic/{topic} — who's reading books in this topic right now? (Sorted Set + Hash)
+    - **13.2c** GET /api/activity/book/{bookId} — who's reading this book? (Set + Hash)
+    - **13.2d** GET /api/activity/book/{bookId}/count — live reader count (Set SCARD)
+    - **13.2e** Completing a book removes the user from all active reading structures
+- [ ] **13.3 Unique reader stats with HyperLogLog** — Track approximate unique reader count per topic and per book using PFADD/PFCOUNT — constant ~12KB memory regardless of millions of users *(depends on 13.2)*
+    - `opsForHyperLogLog()` `PFADD` `PFCOUNT` `PFMERGE` `probabilistic data structure`
+    - **13.3a** PFADD when a user starts reading a book — add userId to `unique_readers:<topic>` and `unique_readers:book:<bookId>`
+    - **13.3b** GET /api/activity/topic/{topic}/unique-readers — approximate unique reader count for a topic
+    - **13.3c** GET /api/activity/book/{bookId}/unique-readers — approximate unique reader count for a book
+    - **13.3d** Compare with Set-based exact count — same answer, fraction of the memory
 
 ## Phase 14 — Keycloak Integration
 > Replace hand-rolled JWT auth with a production-grade identity provider

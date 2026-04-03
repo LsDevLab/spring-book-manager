@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
     }
 
     /** Handles validation failures ({@code @Valid}) → 400 Bad Request with per-field errors. */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler({ MethodArgumentNotValidException.class, HttpMessageNotReadableException.class })
     public ResponseEntity<ErrorResponseDTO> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->

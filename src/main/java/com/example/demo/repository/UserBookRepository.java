@@ -30,6 +30,8 @@ public interface UserBookRepository extends JpaRepository<UserBook, UUID> {
     /** Find a specific user-book entry. Derived query: {@code WHERE user_id = ? AND book_id = ?}. */
     Optional<UserBook> findByUserIdAndBookId(UUID userId, UUID bookId);
 
+    boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
+
     /** Count all books on a user's reading list. Derived: {@code SELECT COUNT(*) WHERE user_id = ?}. */
     long countByUserId(UUID userId);
 
