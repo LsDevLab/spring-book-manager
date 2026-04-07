@@ -1,6 +1,8 @@
 package com.example.demo.exception;
 
 import com.example.demo.dto.response.ErrorResponseDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -10,13 +12,24 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 // @ControllerAdvice — intercepts exceptions thrown by ANY controller globally.
 // No more try/catch in each controller method — just throw, and this class handles it.
+//
+// In the "dev" profile, the catch-all handler also includes the full stack trace in the response
+// so you don't have to dig through server logs every time. In production, stack traces are hidden.
 @ControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    // Environment gives us access to the active Spring profiles at runtime.
+    // We use it to decide whether to expose stack traces (dev only).
+    private final Environment environment;
 
     // @ExceptionHandler — maps a specific exception type to a response.
     // Any BookNotFoundException thrown anywhere returns 404 automatically.
@@ -28,7 +41,7 @@ public class GlobalExceptionHandler {
     }
 
     /** Handles validation failures ({@code @Valid}) → 400 Bad Request with per-field errors. */
-    @ExceptionHandler({ MethodArgumentNotValidException.class, HttpMessageNotReadableException.class })
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
@@ -95,11 +108,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
-    /** Catch-all for unhandled exceptions → 500 Internal Server Error. */
+    /** Catch-all for unhandled exceptions → 500 Internal Server Error.
+     *  In dev profile, includes the full stack trace in the response body for easy debugging. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneral(Exception ex) {
         ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error");
+
+        // Environment.getActiveProfiles() returns the profiles activated via spring.profiles.active.
+        // We check if "dev" is among them — if so, attach the stack trace to the response.
+        // This way you see the full cause in Swagger/Postman instead of a generic 500.
+        if (isDevProfile()) {
+            body.setMessage(ex.getMessage());
+            StringWriter sw = new StringWriter();
+            ex.printStackTrace(new PrintWriter(sw));
+            body.setStackTrace(sw.toString());
+        }
+
         return ResponseEntity.internalServerError().body(body);
+    }
+
+    private boolean isDevProfile() {
+        return Arrays.asList(environment.getActiveProfiles()).contains("dev");
     }
 
 }

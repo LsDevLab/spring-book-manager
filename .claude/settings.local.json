@@ -4,7 +4,9 @@
       "WebSearch",
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
-      "Bash(./mvnw compile:*)"
+      "Bash(./mvnw compile:*)",
+      "Bash(xargs grep:*)",
+      "Bash(find .:*)"
     ]
   }
 }

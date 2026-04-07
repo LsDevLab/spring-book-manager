@@ -174,7 +174,7 @@ A REST API where developers can manage their technical reading list — add book
     - **13.2c** GET /api/activity/book/{bookId} — who's reading this book? (Set + Hash)
     - **13.2d** GET /api/activity/book/{bookId}/count — live reader count (Set SCARD)
     - **13.2e** Completing a book removes the user from all active reading structures
-- [ ] **13.3 Unique reader stats with HyperLogLog** — Track approximate unique reader count per topic and per book using PFADD/PFCOUNT — constant ~12KB memory regardless of millions of users *(depends on 13.2)*
+- [x] **13.3 Unique reader stats with HyperLogLog** — Track approximate unique reader count per topic and per book using PFADD/PFCOUNT — constant ~12KB memory regardless of millions of users *(depends on 13.2)*
     - `opsForHyperLogLog()` `PFADD` `PFCOUNT` `PFMERGE` `probabilistic data structure`
     - **13.3a** PFADD when a user starts reading a book — add userId to `unique_readers:<topic>` and `unique_readers:book:<bookId>`
     - **13.3b** GET /api/activity/topic/{topic}/unique-readers — approximate unique reader count for a topic

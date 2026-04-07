@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.response.ActiveReaderDTO;
+import com.example.demo.dto.response.HllComparisonDTO;
 import com.example.demo.model.Topic;
 import com.example.demo.service.ReadingActivityService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -57,5 +58,43 @@ public class ActivityController {
             @Parameter(description = "Book ID", required = true)
             @PathVariable UUID bookId) {
         return ResponseEntity.ok(readingActivityService.activeReadersByBookCount(bookId));
+    }
+
+    // "How many unique users have ever read books in this topic?"
+    // Uses HyperLogLog (PFCOUNT) — approximate count, constant ~12KB memory.
+    @GetMapping("/topic/{topic}/unique-readers")
+    @Operation(summary = "Unique readers by topic (HLL)", description = "Approximate count of unique users who have ever read a book in this topic, using HyperLogLog (PFCOUNT)")
+    @ApiResponse(responseCode = "200", description = "Approximate unique reader count")
+    public ResponseEntity<Long> uniqueReadersByTopic(
+            @Parameter(description = "Topic", required = true)
+            @PathVariable Topic topic) {
+        return ResponseEntity.ok(readingActivityService.uniqueReadersByTopic(topic));
+    }
+
+    // "How many unique users have ever read this book?"
+    // Uses HyperLogLog (PFCOUNT) — approximate count, constant ~12KB memory.
+    @GetMapping("/book/{bookId}/unique-readers")
+    @Operation(summary = "Unique readers of a book (HLL)", description = "Approximate count of unique users who have ever read this book, using HyperLogLog (PFCOUNT)")
+    @ApiResponse(responseCode = "200", description = "Approximate unique reader count")
+    public ResponseEntity<Long> uniqueReadersByBook(
+            @Parameter(description = "Book ID", required = true)
+            @PathVariable UUID bookId) {
+        return ResponseEntity.ok(readingActivityService.uniqueReadersByBook(bookId));
+    }
+
+    // Simulation endpoint — adds N random userIds to both a HyperLogLog and a Set,
+    // then compares count accuracy and memory usage side by side.
+    // Try: /api/activity/simulate?count=50000 — HLL will use ~200x less memory.
+    @GetMapping("/simulate")
+    @Operation(
+            summary = "Simulate HLL vs Set comparison",
+            description = "Adds N random users to both a HyperLogLog and a Set, then compares count accuracy " +
+                    "(PFCOUNT vs SCARD) and memory usage (MEMORY USAGE). Temporary keys are cleaned up after."
+    )
+    @ApiResponse(responseCode = "200", description = "Comparison results showing count and memory differences")
+    public ResponseEntity<HllComparisonDTO> simulateComparison(
+            @Parameter(description = "Number of unique users to simulate", example = "50000")
+            @RequestParam(defaultValue = "50000") int count) {
+        return ResponseEntity.ok(readingActivityService.simulateHllVsSet(count));
     }
 }
