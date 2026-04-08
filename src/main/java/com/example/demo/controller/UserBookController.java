@@ -65,6 +65,7 @@ class UserBookController {
     @ApiResponse(responseCode = "201", description = "Book added to reading list")
     @ApiResponse(responseCode = "403", description = "Not authorized — can only modify own reading list")
     @ApiResponse(responseCode = "404", description = "User or book not found")
+    @ApiResponse(responseCode = "409", description = "Book already added to user reading list")
     public ResponseEntity<UserBookResponseDTO> addToReadingList(
             @Parameter(description = "User ID") @PathVariable UUID userId,
             @Parameter(description = "Book ID") @PathVariable UUID bookId) {

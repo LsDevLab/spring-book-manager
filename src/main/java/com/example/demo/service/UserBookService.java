@@ -68,6 +68,14 @@ public class UserBookService {
         return userBookRepository.findByUserId(userId);
     }
 
+    /**
+     * Returns a paginated reading list for a user.
+     *
+     * @param userId   the user's ID
+     * @param pageable pagination parameters
+     * @return a Page of UserBook entries
+     * @throws UserNotFoundException if the user does not exist
+     */
     public Page<UserBook> searchReadingList(UUID userId, Pageable pageable) {
         if(!userRepository.existsById(userId)){
             throw new UserNotFoundException(userId);
@@ -233,6 +241,13 @@ public class UserBookService {
         );
     }
 
+    /**
+     * Returns the most-read books for a topic, paginated. Cached in Redis.
+     *
+     * @param topic          the book topic to filter by
+     * @param simplePageable pagination parameters (page + size)
+     * @return a {@link SimplePage} of books ordered by read count descending
+     */
     // Returns a SimplePage<Book> — our own DTO with only page/size/totalElements/totalPages.
     // This is what gets cached in Redis. Unlike Page/PageImpl, SimplePage is a plain POJO
     // that Jackson can serialize and deserialize without issues (no @JsonCreator tricks needed).
@@ -245,6 +260,12 @@ public class UserBookService {
     }
 
 
+    /**
+     * Counts reading list entries across all users with the given status.
+     *
+     * @param status the reading status to count
+     * @return the total count
+     */
     public long countByStatus(ReadingStatus status){
         return userBookRepository.countByStatus(status);
     }

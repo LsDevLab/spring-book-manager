@@ -12,8 +12,12 @@ package com.example.demo.repository.projection;
  */
 public interface UserStatsProjection {
 
+    /** Total number of books in the user's reading list. */
     long getTotalBooks();
+    /** Number of books with status COMPLETED. */
     long getBooksCompleted();
+    /** Number of books with status READING. */
     long getBooksReading();
+    /** Sum of currentPage across all reading list entries. */
     long getTotalPagesRead();
 }

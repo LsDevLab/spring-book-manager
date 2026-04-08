@@ -12,10 +12,13 @@ import java.util.UUID;
  */
 public interface UserRepository extends JpaRepository<User, UUID> {
 
+    /** Checks whether a user with the given username or email exists. */
     boolean existsByUsernameOrEmail(String username, String email);
 
+    /** Finds a user whose username or email matches. Returns the first match. */
     Optional<User> findByUsernameOrEmail(String username, String email);
 
+    /** Finds a user by exact username match. */
     Optional<User> findByUsername(String username);
 
 }

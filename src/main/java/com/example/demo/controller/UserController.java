@@ -81,6 +81,7 @@ class UserController {
     @ApiResponse(responseCode = "201", description = "User created")
     @ApiResponse(responseCode = "400", description = "Validation failed or user already exists")
     @ApiResponse(responseCode = "403", description = "Not authorized — ADMIN role required")
+    @ApiResponse(responseCode = "409", description = "User already exists")
     public ResponseEntity<UserResponseDTO> postUser(@RequestBody @Valid UserRequestDTO dto){
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(UserResponseDTO.fromEntity(userService.createUser(dto.toEntity())));

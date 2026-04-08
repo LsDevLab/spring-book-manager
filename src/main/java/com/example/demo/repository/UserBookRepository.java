@@ -25,11 +25,13 @@ public interface UserBookRepository extends JpaRepository<UserBook, UUID> {
     /** Find all reading list entries for a given user. Derived query: {@code WHERE user_id = ?}. */
     List<UserBook> findByUserId(UUID userId);
 
+    /** Paginated reading list entries for a user. Derived query: {@code WHERE user_id = ?} with pagination. */
     Page<UserBook> findByUserId(UUID userId, Pageable pageable);
 
     /** Find a specific user-book entry. Derived query: {@code WHERE user_id = ? AND book_id = ?}. */
     Optional<UserBook> findByUserIdAndBookId(UUID userId, UUID bookId);
 
+    /** Checks whether a user already has a specific book in their reading list. */
     boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 
     /** Count all books on a user's reading list. Derived: {@code SELECT COUNT(*) WHERE user_id = ?}. */
@@ -38,8 +40,13 @@ public interface UserBookRepository extends JpaRepository<UserBook, UUID> {
     /** Count books with a specific status. Derived: {@code WHERE user_id = ? AND status = ?}. */
     long countByUserIdAndStatus(UUID userId, ReadingStatus status);
 
+    /** Count all reading list entries with a given status across all users. */
     long countByStatus(ReadingStatus status);
 
+    /**
+     * Aggregated reading stats for a user in a single DB round-trip.
+     * Uses CASE WHEN to count by status and COALESCE for null-safe page summing.
+     */
     @Query("""
                 SELECT COUNT(ub) AS totalBooks,
                        SUM(CASE WHEN ub.status = 'COMPLETED' THEN 1 ELSE 0 END) AS booksCompleted,
@@ -50,6 +57,10 @@ public interface UserBookRepository extends JpaRepository<UserBook, UUID> {
             """)
     UserStatsProjection getUserStats(@Param("userId") UUID userId);
 
+    /**
+     * Returns books for a topic ordered by how many users have them in their reading list (most read first).
+     * Uses a JOIN + GROUP BY + COUNT aggregation with pagination.
+     */
     @Query("""
                 SELECT b FROM Book b
                 JOIN UserBook ub ON ub.book = b

@@ -6,7 +6,10 @@
       "mcp__context7__query-docs",
       "Bash(./mvnw compile:*)",
       "Bash(xargs grep:*)",
-      "Bash(find .:*)"
+      "Bash(find .:*)",
+      "Bash(curl -s http://localhost:8080/realms/book-manager-realm/.well-known/openid-configuration)",
+      "Bash(docker compose:*)",
+      "Bash(curl -s -X POST http://localhost:8080/realms/book-manager-realm/protocol/openid-connect/token -d \"grant_type=client_credentials&client_id=book-manager-admin&client_secret=rizNbVeQZatTDd6u6guMD0IkKwNGgpTt\")"
     ]
   }
 }

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -52,6 +51,5 @@ public class UserBook {
     private LocalDateTime startedAt;
 
     private LocalDateTime completedAt;
-
 
 }

@@ -80,8 +80,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponseDTO> handleUserAlreadyExists(UserAlreadyExistsException ex) {
-        ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
-        return ResponseEntity.badRequest().body(body);
+        ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.CONFLICT.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(WrongCredentialsException.class)
@@ -100,6 +100,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleRateLimitsExceeded(RateLimitExceededException ex) {
         ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.TOO_MANY_REQUESTS.value(), "Rate limits exceeded: " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(body);
+    }
+
+    @ExceptionHandler(AuthMethodAlreadyRegisteredException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAuthMethodAlreadyRegistered(AuthMethodAlreadyRegisteredException ex) {
+        ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.CONFLICT.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(BookAlreadyInReadingList.class)

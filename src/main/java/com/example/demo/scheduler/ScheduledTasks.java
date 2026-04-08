@@ -29,7 +29,7 @@ public class ScheduledTasks {
 
     private final UserBookService userBookService;
     private final BookService bookService;
-    private final RestClient restClient;
+    private final RestClient autoRestClient;
 
     // SLF4J logger — Spring Boot's default logging facade
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
@@ -44,7 +44,7 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 0 2 * * *")
     public void fetchTrendingBooks() {
-        List<BookRequestDTO> books = restClient.get()
+        List<BookRequestDTO> books = autoRestClient.get()
                 .uri("/mock/trending-books")
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {

@@ -22,13 +22,13 @@ public class BookSpecifications {
 
     private BookSpecifications() {}
 
-    // Case-insensitive LIKE — SQL: WHERE LOWER(title) LIKE '%value%'
+    /** Case-insensitive partial match on title. SQL: {@code WHERE LOWER(title) LIKE '%value%'}. */
     public static Specification<Book> titleContains(String title) {
         return (root, query, cb) ->
                 cb.like(cb.lower(root.get("title")), "%" + title.toLowerCase() + "%");
     }
 
-    // Case-insensitive LIKE — SQL: WHERE LOWER(author) LIKE '%value%'
+    /** Case-insensitive partial match on author. SQL: {@code WHERE LOWER(author) LIKE '%value%'}. */
     public static Specification<Book> authorContains(String author){
         return (root, query, cb) ->
                 cb.like(cb.lower(root.get("author")), "%" + author.toLowerCase()+ "%");

@@ -1,5 +1,6 @@
 package com.example.demo.dto.request;
 
+import com.example.demo.model.AuthMethod;
 import com.example.demo.model.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
@@ -27,7 +28,11 @@ public class RegisterRequestDTO {
     @Schema(description = "Password (minimum 8 characters)", example = "securePassword123")
     private String password;
 
-    public User toEntity() {
+    @NotNull
+    @Schema(description = "The type of authentication", example = "KEYCLOAK")
+    private AuthMethod authMethod;
+
+    public User toNewUserEntity() {
         User user = new User();
         user.setUsername(this.username);
         user.setEmail(this.email);

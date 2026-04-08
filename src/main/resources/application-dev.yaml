@@ -15,3 +15,19 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/book-manager-realm
+
+app:
+  keycloak:
+    base-path: http://localhost:8080
+    issuer: http://localhost:8080/realms/book-manager-realm
+    token-uri: /realms/book-manager-realm/protocol/openid-connect/token
+    client-id: book-manager-api
+    admin-client-id: book-manager-admin
+    admin-client-secret: rizNbVeQZatTDd6u6guMD0IkKwNGgpTt
+    admin-uri: /admin/realms/book-manager-realm

@@ -25,8 +25,10 @@ public interface BookRepository extends JpaRepository<Book, UUID>, JpaSpecificat
      */
     Page<Book> findByTopic(Topic topic, Pageable pageable);
 
+    /** Finds a book by its ISBN. Derived query: {@code WHERE isbn = ?}. */
     Optional<Book> findByIsbn(String isbn);
 
+    /** Checks whether a book with the given ISBN exists. Derived query: {@code SELECT EXISTS(... WHERE isbn = ?)}. */
     boolean existsByIsbn(String isbn);
 
 }

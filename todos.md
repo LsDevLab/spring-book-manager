@@ -181,17 +181,21 @@ A REST API where developers can manage their technical reading list — add book
     - **13.3c** GET /api/activity/book/{bookId}/unique-readers — approximate unique reader count for a book
     - **13.3d** Compare with Set-based exact count — same answer, fraction of the memory
 
-## Phase 14 — Keycloak Integration
-> Replace hand-rolled JWT auth with a production-grade identity provider
+## Phase 14 — Keycloak Integration (Dual Auth)
+> Add Keycloak as an alternative login method alongside existing username/password JWT auth
 
-- [ ] **14.1 Set up Keycloak with Docker** — Run Keycloak container, create a realm, define client, and configure roles (USER, ADMIN) via the admin console *(depends on 10.7)*
+- [x] **14.1 Set up Keycloak with Docker** — Run Keycloak container, create a realm, define client, and configure roles (USER, ADMIN) via the admin console *(depends on 10.7)*
     - `Keycloak` `Docker Compose` `realm` `client` `roles` `OIDC`
-- [ ] **14.2 Configure Spring as OAuth2 Resource Server** — Replace custom JwtAuthenticationFilter with spring-boot-starter-oauth2-resource-server, validate Keycloak-issued tokens *(depends on 14.1)*
+- [x] **14.2 Add OAuth2 Resource Server support** — Add spring-boot-starter-oauth2-resource-server alongside the existing JWT filter, so Spring can validate tokens from both issuers *(depends on 14.1)*
     - `spring-boot-starter-oauth2-resource-server` `JwtDecoder` `issuer-uri` `jwk-set-uri`
-- [ ] **14.3 Map Keycloak roles to Spring Security authorities** — Extract realm/client roles from the JWT claims and convert to GrantedAuthority so @PreAuthorize still works *(depends on 14.2)*
+- [x] **14.3 Dual token validation** — Configure SecurityFilterChain to accept both self-issued JWTs (from /api/auth/login) and Keycloak-issued JWTs. Route to the correct validator based on the token's issuer claim *(depends on 14.2)*
+    - `multiple issuers` `DelegatingJwtDecoder` `issuer-based routing` `BearerTokenAuthenticationFilter`
+- [x] **14.4 Map Keycloak roles to Spring Security authorities** — Extract realm/client roles from Keycloak JWT claims and convert to GrantedAuthority so @PreAuthorize works for both auth methods *(depends on 14.3)*
     - `JwtAuthenticationConverter` `granted authorities mapper` `realm_access` `resource_access`
-- [ ] **14.4 Remove custom auth code** — Delete AuthController, JwtTokenProvider, JwtAuthenticationFilter, AuthUserDetails. Registration and login are now handled by Keycloak *(depends on 14.3)*
-    - `code cleanup` `separation of concerns` `externalized auth`
+- [x] **14.5 Keycloak login endpoint** — POST /api/auth/keycloak/token — exchange Keycloak authorization code or direct-grant credentials for a Keycloak token, so clients don't need to talk to Keycloak directly *(depends on 14.4)*
+    - `token exchange` `grant_type=password` `grant_type=authorization_code` `WebClient`
+- [x] **14.6 Auto-provision Keycloak users in local DB** — When a Keycloak-authenticated user hits the API for the first time, create a matching User entity so reading list features work *(depends on 14.4)*
+    - `user provisioning` `first-login detection` `sub claim`
 
 ---
 

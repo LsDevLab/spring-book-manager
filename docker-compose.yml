@@ -17,5 +17,20 @@ services:
     ports:
       - "6379:6379"
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: books-manager-keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    command:
+      - start-dev
+      - --import-realm
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak/books-manager-realm.json:/opt/keycloak/data/import/books-manager-realm.json:ro
+
+
 volumes:
   pgdata:

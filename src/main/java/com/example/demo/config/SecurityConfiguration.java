@@ -29,7 +29,8 @@ class SecurityConfiguration {
             )                                                                   // no sessions — JWT only
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                        "/api/auth/**",
+                        "/api/auth/register",
+                        "/api/auth/login",
                         "/api/activity/**",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
@@ -37,6 +38,9 @@ class SecurityConfiguration {
                 ).permitAll()
                 .anyRequest().authenticated()                                   // everything else requires auth
             )
+            // Disable Spring's auto-configured BearerTokenAuthenticationFilter — we handle
+            // both self-issued and Keycloak tokens in our own JwtAuthenticationFilter.
+            .oauth2ResourceServer(AbstractHttpConfigurer::disable)
             .addFilterBefore(
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter.class
