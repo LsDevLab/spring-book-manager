@@ -10,7 +10,12 @@
       "Bash(curl -s http://localhost:8080/realms/book-manager-realm/.well-known/openid-configuration)",
       "Bash(docker compose:*)",
       "Bash(curl -s -X POST http://localhost:8080/realms/book-manager-realm/protocol/openid-connect/token -d \"grant_type=client_credentials&client_id=book-manager-admin&client_secret=rizNbVeQZatTDd6u6guMD0IkKwNGgpTt\")",
-      "Bash(./mvnw clean:*)"
+      "Bash(./mvnw clean:*)",
+      "WebFetch(domain:www.mimit.gov.it)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:pub.dev)",
+      "WebFetch(domain:www.doveconviene.it)",
+      "WebFetch(domain:shopfully.com)"
     ]
   }
 }

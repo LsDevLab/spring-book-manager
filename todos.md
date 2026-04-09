@@ -206,9 +206,34 @@ A REST API where developers can manage their technical reading list — add book
     - `spring-boot-starter-graphql` `SDL schema` `type` `Query` `Mutation`
 - [x] **15.2 Book queries and mutations** — Implement @QueryMapping for books (list, byId, search) and @MutationMapping for create/update/delete *(depends on 15.1)*
     - `@QueryMapping` `@MutationMapping` `@Argument` `DataFetcher`
-- [] **15.3 Reading list queries with nested types** — Query a user's reading list with nested book details, let the client choose which fields to fetch *(depends on 15.2)*
-    - `nested types` `@SchemaMapping` `N+1 problem` `@BatchMapping`
-- [ ] **15.4 Secure GraphQL with Spring Security** — Apply authentication and role-based authorization to GraphQL operations *(depends on 15.3, 10.7)*
+    - Also added `GraphqlExceptionHandler` (`DataFetcherExceptionResolverAdapter`) — maps app exceptions to GraphQL errors with custom classifications (NOT_FOUND, CONFLICT, BAD_REQUEST)
+- [x] **15.3 Reading list queries with nested types** — Query a user's reading list with nested book details, let the client choose which fields to fetch *(depends on 15.2)*
+    - `nested types` `@BatchMapping` `N+1 problem` `FetchType.LAZY` `@EntityGraph`
+    - N+1 fix: made both `@ManyToOne` on UserBook LAZY. REST uses `@EntityGraph` to JOIN FETCH book in one query. GraphQL uses `@BatchMapping` to load books on-demand only when the client asks for them.
+    - Separate repository methods: `findByUserId` (with @EntityGraph, for REST) vs `findByUserIdLazy` (plain, for GraphQL)
+    - Removed `user` from GraphQL `UserBook` type — caller already knows it (passed userId)
+- [x] **15.4 Secure GraphQL with Spring Security** — Apply authentication and role-based authorization to GraphQL operations *(depends on 15.3, 10.7)*
     - `@PreAuthorize on GraphQL` `SecurityContext in GraphQL` `query-level vs field-level auth`
-- [ ] **15.5 GraphiQL playground** — Enable the built-in GraphiQL UI for interactive query testing *(depends on 15.1)*
+    - Removed `/graphql` from `permitAll()` — JWT required. Kept `/graphiql` public (UI only, queries still need auth).
+    - Same rules as REST: mutations require ADMIN, userBooks requires ownership check, queries open to authenticated users.
+    - Added `AccessDeniedException` handling in `GraphqlExceptionHandler` → FORBIDDEN classification.
+- [x] **15.5 GraphiQL playground** — Enable the built-in GraphiQL UI for interactive query testing *(depends on 15.1)*
     - `spring.graphql.graphiql.enabled` `GraphiQL` `introspection`
+
+---
+
+## Phase 16 — Testing
+> Write meaningful tests at every layer — from repository to controller to security
+
+- [ ] **16.1 Repository tests with @DataJpaTest** — Test BookRepository and UserBookRepository with H2. Verify derived queries, @EntityGraph, and @Query methods work correctly *(depends on 5.1)*
+    - `@DataJpaTest` `@ActiveProfiles("test")` `TestEntityManager` `assertThat` `H2 in-memory`
+- [ ] **16.2 Service tests with @MockBean** — Test BookService and UserBookService in isolation, mocking repositories. Verify business logic, exceptions, and edge cases *(depends on 16.1)*
+    - `@ExtendWith(MockitoExtension.class)` `@Mock` `@InjectMocks` `when().thenReturn()` `verify()` `assertThrows`
+- [ ] **16.3 REST controller tests with @WebMvcTest** — Test BookController with MockMvc. Verify request/response mapping, validation, error handling, and security rules *(depends on 16.2)*
+    - `@WebMvcTest` `MockMvc` `@MockBean` `@WithMockUser` `mockMvc.perform()` `andExpect()` `status().isOk()`
+- [ ] **16.4 GraphQL controller tests with @GraphQlTest** — Test BookGraphqlController and UserBookGraphqlController. Verify queries, mutations, @BatchMapping, and error handling *(depends on 16.3)*
+    - `@GraphQlTest` `HttpGraphQlTester` `@MockBean` `document()` `path()` `entityList()` `errors()`
+- [ ] **16.5 Security tests** — Test JWT authentication and role-based authorization. Verify public endpoints are open, protected endpoints reject unauthenticated requests, and role checks work *(depends on 16.3, 16.4)*
+    - `@WithMockUser(roles="ADMIN")` `@WithAnonymousUser` `status().isUnauthorized()` `status().isForbidden()`
+- [ ] **16.6 Integration tests with @SpringBootTest** — Full end-to-end tests that boot the real application context. Register user, login, create books, build reading list, verify GraphQL responses *(depends on 16.5)*
+    - `@SpringBootTest(webEnvironment = RANDOM_PORT)` `TestRestTemplate` `HttpGraphQlTester` `@ActiveProfiles("test")`

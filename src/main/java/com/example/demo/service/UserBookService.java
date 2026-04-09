@@ -61,11 +61,20 @@ public class UserBookService {
      * @return list of UserBook entries (may be empty)
      * @throws UserNotFoundException if the user does not exist
      */
+    /** REST — eagerly loads books via @EntityGraph. */
     public List<UserBook> getReadingList(UUID userId) {
         if(!userRepository.existsById(userId)){
             throw new UserNotFoundException(userId);
         }
         return userBookRepository.findByUserId(userId);
+    }
+
+    /** GraphQL — lazy load, @BatchMapping handles book fetching on demand. */
+    public List<UserBook> getReadingListLazy(UUID userId) {
+        if(!userRepository.existsById(userId)){
+            throw new UserNotFoundException(userId);
+        }
+        return userBookRepository.findByUserIdLazy(userId);
     }
 
     /**

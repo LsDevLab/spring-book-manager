@@ -33,11 +33,18 @@ public class UserBook {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne
+    // Both relations are LAZY — Hibernate won't load them unless code calls getUser()/getBook()
+    // or the repository query uses @EntityGraph to explicitly include them.
+    // This prevents the N+1 problem: without LAZY, fetching N UserBooks would fire
+    // N extra queries for User + N extra queries for Book — even when we don't need them.
+    // Each repository method declares what it needs via @EntityGraph:
+    //   findByUserId        → @EntityGraph({"book"})         — we know the user, just need books
+    //   findByUserIdAndBookId → @EntityGraph({"user", "book"}) — need both for update operations
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 

@@ -35,8 +35,7 @@ class SecurityConfiguration {
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
-                        "/graphql",          // permit for now — will secure in 15.4
-                        "/graphiql"
+                        "/graphiql"          // GraphiQL UI is public — the queries it sends to /graphql still require auth
                 ).permitAll()
                 .anyRequest().authenticated()                                   // everything else requires auth
             )

@@ -1,0 +1,79 @@
+# ---- Types ------------------------------------------------
+# These map to your Java entities, but you only expose fields clients should see.
+# Notice: no "password" field on User -- GraphQL schema = your public API contract.
+
+type Book {
+    id: ID!                # ID is a built-in GraphQL scalar. "!" means non-nullable.
+    title: String!
+    author: String!
+    isbn: String
+    topic: Topic!
+    totalPages: Int
+}
+
+type User {
+    id: ID!
+    username: String!
+    email: String!
+    role: String
+}
+
+type UserBook {
+    id: ID!
+    # No "user" field — userBooks(userId) already implies the user, and the caller knows it.
+    # This matches the REST approach (UserBookResponseDTO also excludes user).
+    # Avoids N+1: user is LAZY, so not exposing it means Hibernate never loads it.
+    book: Book!            # Loaded via @EntityGraph in the repository — no N+1
+    status: ReadingStatus
+    currentPage: Int
+    notes: String
+    startedAt: String      # LocalDateTime serialized as ISO string
+    completedAt: String
+}
+
+# ---- Enums ------------------------------------------------
+# Must match your Java enums exactly
+
+enum Topic {
+    BACKEND
+    FRONTEND
+    DEVOPS
+    ALGORITHMS
+    ARCHITECTURE
+}
+
+enum ReadingStatus {
+    WANT_TO_READ
+    READING
+    COMPLETED
+}
+
+# ---- Queries (read operations) ----------------------------
+# Think of these as your GET endpoints
+
+type Query {
+    books: [Book!]!                       # GET /api/books      -> returns a list of books
+    book(id: ID!): Book                   # GET /api/books/{id} -> returns one book (nullable = not found)
+    userBooks(userId: ID!): [UserBook!]!  # GET /api/users/{id}/books -> user's reading list
+}
+
+# ---- Mutations (write operations) -------------------------
+# Think of these as your POST/PUT/DELETE endpoints
+
+type Mutation {
+    createBook(input: BookInput!): Book!
+    updateBook(id: ID!, input: BookInput!): Book!
+    deleteBook(id: ID!): Boolean!
+}
+
+# ---- Input types ------------------------------------------
+# GraphQL separates "output types" (what you return) from "input types" (what clients send).
+# This is like the difference between BookResponseDTO and BookRequestDTO in your REST API.
+
+input BookInput {
+    title: String!
+    author: String!
+    isbn: String
+    topic: Topic!
+    totalPages: Int
+}

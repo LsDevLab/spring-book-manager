@@ -7,6 +7,7 @@ import com.example.demo.model.UserBook;
 import com.example.demo.repository.projection.UserStatsProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,13 +23,42 @@ import java.util.UUID;
  */
 public interface UserBookRepository extends JpaRepository<UserBook, UUID> {
 
-    /** Find all reading list entries for a given user. Derived query: {@code WHERE user_id = ?}. */
+    /**
+     * Find all reading list entries for a given user — used by REST endpoints.
+     *
+     * <p>{@code @EntityGraph({"book"})} — tells Hibernate to JOIN FETCH the book relation
+     * in the same query, instead of firing a separate SELECT per row (N+1 problem).
+     * We don't fetch user because the caller already knows it — they passed userId.</p>
+     *
+     * <p>REST always needs book data (the DTO includes it), so eager JOIN is the right call.</p>
+     */
+    @EntityGraph(attributePaths = {"book"})
     List<UserBook> findByUserId(UUID userId);
 
-    /** Paginated reading list entries for a user. Derived query: {@code WHERE user_id = ?} with pagination. */
+    /**
+     * Find all reading list entries for a given user — used by GraphQL.
+     *
+     * <p>No @EntityGraph — both relations stay LAZY. GraphQL uses @BatchMapping to load
+     * book data only when the client requests it. This avoids fetching book/user when the
+     * client only asks for scalar fields like status and currentPage.</p>
+     */
+    @Query("SELECT ub FROM UserBook ub WHERE ub.user.id = :userId")
+    List<UserBook> findByUserIdLazy(@Param("userId") UUID userId);
+
+    /**
+     * Paginated reading list for a user — same @EntityGraph strategy as above.
+     */
+    @EntityGraph(attributePaths = {"book"})
     Page<UserBook> findByUserId(UUID userId, Pageable pageable);
 
-    /** Find a specific user-book entry. Derived query: {@code WHERE user_id = ? AND book_id = ?}. */
+    /**
+     * Find a specific user-book entry.
+     *
+     * <p>{@code @EntityGraph({"user", "book"})} — fetches both relations because this is
+     * used by update/delete operations that may need to access user details (e.g. for
+     * events like BookCompletedEvent that reference username) and book details.</p>
+     */
+    @EntityGraph(attributePaths = {"user", "book"})
     Optional<UserBook> findByUserIdAndBookId(UUID userId, UUID bookId);
 
     /** Checks whether a user already has a specific book in their reading list. */

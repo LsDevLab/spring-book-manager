@@ -32,6 +32,8 @@ public class BookService {
         return bookRepository.findAll();
     }
 
+    public List<Book> getBooksByIds(List<UUID> ids) { return bookRepository.findAllById(ids); }
+
     /**
      * Dynamic multi-criteria search using JPA Specifications.
      *
