@@ -47,84 +47,36 @@ public class AuthService {
     @Value("${app.keycloak.admin-uri}")
     private String keycloakAdminUri;
 
-    /**
-     * Registers a new user with the specified authentication method.
-     *
-     * @param dto registration data including username, email, password, and auth method
-     * @return the created {@link UserAuthMethod} record
-     * @throws UserAlreadyExistsException if a user with the same username or email already exists
-     */
-    @Transactional
-    public UserAuthMethod registerUser(RegisterRequestDTO dto){
-        if (dto.getAuthMethod() == AuthMethod.SELF) {
-            return userService.createUserWithRegistrationMethod(
-                    dto.getUsername(),
-                    dto.getEmail(),
-                    passwordEncoder.encode(dto.getPassword()),
-                    Role.USER,
-                    AuthMethod.SELF
-            );
-        } else {
-            UserAuthMethod userAuthMethod = userService.createUserWithRegistrationMethod(
-                    dto.getUsername(),
-                    dto.getEmail(),
-                    "",
-                    Role.USER,
-                    AuthMethod.KEYCLOAK
-            );
-            registerKeycloak(
-                    dto.getUsername(),
-                    dto.getEmail(),
-                    dto.getPassword()
-            );
-            return userAuthMethod;
-        }
-    }
-
-    /**
-     * Links an additional authentication method to an existing user's account.
-     * Requires the user to be authenticated (JWT), so only the account owner can link methods.
-     *
-     * @param dto      the new auth method and its credentials
-     * @param userId   the authenticated user's ID (extracted from JWT)
-     * @return the created {@link UserAuthMethod} record
-     * @throws UserNotFoundException if the user does not exist
-     * @throws AuthMethodAlreadyRegisteredException if the method is already linked
-     */
-    @Transactional
-    public UserAuthMethod linkAuthMethodForUser(LinkUserAuthMethodRequestDTO dto, UUID userId){
-        if (dto.getAuthMethod() == AuthMethod.SELF) {
-            return userService.updateUserWithRegistrationMethod(
-                userId,
-                passwordEncoder.encode(dto.getPassword()),
-                AuthMethod.SELF
-            );
-        } else {
-            UserAuthMethod userAuthMethod = userService.updateUserWithRegistrationMethod(
-                    userId,
-                    null,
-                    AuthMethod.KEYCLOAK
-            );
-            registerKeycloak(
-                    userAuthMethod.getUser().getUsername(),
-                    userAuthMethod.getUser().getEmail(),
-                    dto.getPassword()
-            );
-            return userAuthMethod;
-        }
-    }
 
     /**
      * Creates a user in Keycloak via the Admin REST API.
      *
      * @throws UserAlreadyExistsException if the user already exists in Keycloak
      */
-    protected void registerKeycloak(String username, String email, String password) {
+    /**
+     * Creates a user in Keycloak and assigns a realm role.
+     *
+     * <p>Three-step process:</p>
+     * <ol>
+     *   <li>POST /users — creates the user. Keycloak returns the user's ID in the Location header.
+     *       Also stores {@code app_user_id} as a custom attribute (mapped to a JWT claim via Protocol Mapper)
+     *       since Keycloak has no concept of our local DB's UUID.</li>
+     *   <li>GET /roles/{roleName} — fetches the role's internal representation (Keycloak needs both id + name).</li>
+     *   <li>POST /users/{id}/role-mappings/realm — assigns the realm role so it appears
+     *       in the token's {@code realm_access.roles} claim automatically.</li>
+     * </ol>
+     *
+     * @throws UserAlreadyExistsException if the user already exists in Keycloak
+     */
+    private void keycloakRegister(String username, String email, String password,
+                                  UUID appUserId, Role appRole) {
 
-        // Create user in Keycloak via Admin REST API
-        String adminToken = getKeycloakAdminToken();
+        String adminToken = keycloakAdminLogin();
+
+        // Step 1: Create user with app_user_id as a custom attribute
+        String keycloakUserId;
         try {
-            keycloakRestClient.post()
+            var responseEntity = keycloakRestClient.post()
                     .uri(keycloakAdminUri + "/users")
                     .header("Authorization", "Bearer " + adminToken)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -143,15 +95,41 @@ public class AuthService {
                                     "type", "password",
                                     "value", password,
                                     "temporary", false
-                            ))
+                            )),
+                            // app_user_id — our local DB's UUID. Keycloak doesn't have this concept,
+                            // so we store it as a user attribute and map it to a JWT claim via Protocol Mapper.
+                            "attributes", Map.of(
+                                    "appUserId", List.of(appUserId.toString())
+                            )
                     ))
                     .retrieve()
                     .toBodilessEntity();
+
+            // Extract Keycloak user ID from Location header
+            // e.g. http://localhost:8080/admin/realms/book-manager-realm/users/abc-123
+            String location = responseEntity.getHeaders().getLocation().toString();
+            keycloakUserId = location.substring(location.lastIndexOf("/") + 1);
+
         } catch (HttpClientErrorException.Conflict e) {
             throw new UserAlreadyExistsException();
         }
 
+        // Step 2: Fetch the role representation — Keycloak needs both the role's internal id + name
+        Map<String, Object> roleRepresentation = keycloakRestClient.get()
+                .uri(keycloakAdminUri + "/roles/" + appRole.name())
+                .header("Authorization", "Bearer " + adminToken)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
 
+        // Step 3: Assign the realm role to the user
+        // After this, the role appears in realm_access.roles in all future tokens.
+        keycloakRestClient.post()
+                .uri(keycloakAdminUri + "/users/" + keycloakUserId + "/role-mappings/realm")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(List.of(roleRepresentation))
+                .retrieve()
+                .toBodilessEntity();
     }
 
     /**
@@ -159,7 +137,7 @@ public class AuthService {
      *
      * @return the admin bearer token
      */
-    private String getKeycloakAdminToken() {
+    private String keycloakAdminLogin() {
         var formData = new LinkedMultiValueMap<String, String>();
         formData.add("grant_type", "client_credentials");
         formData.add("client_id", keycloakAdminClientId);
@@ -176,27 +154,11 @@ public class AuthService {
     }
 
     /**
-     * Authenticates a user and returns a JWT token.
-     * Delegates to the appropriate login method based on the requested auth method.
-     *
-     * @param dto login credentials including username, email, password, and auth method
-     * @return a {@link LoginResponseDTO} containing the JWT token
-     * @throws WrongCredentialsException if authentication fails
-     */
-    public LoginResponseDTO login(LoginRequestDTO dto){
-        if(dto.getAuthMethod().equals(AuthMethod.SELF)){
-            return loginSelf(dto.getUsername(), dto.getEmail(), dto.getPassword());
-        } else {
-            return loginKeycloak(dto.getUsername(), dto.getEmail(), dto.getPassword());
-        }
-    }
-
-    /**
      * Authenticates against locally stored credentials (bcrypt-hashed password).
      *
      * @throws WrongCredentialsException if the user doesn't exist, hasn't registered with SELF, or the password is wrong
      */
-    public LoginResponseDTO loginSelf(String username, String email, String password){
+    private LoginResponseDTO selfLogin(String username, String email, String password){
 
         try {
             User user = userService.getUserByUsernameOrEmail(
@@ -222,7 +184,7 @@ public class AuthService {
      *
      * @throws WrongCredentialsException if the user doesn't exist, hasn't registered with KEYCLOAK, or Keycloak rejects the credentials
      */
-    public LoginResponseDTO loginKeycloak(String username, String email, String password){
+    private LoginResponseDTO keycloakLogin(String username, String email, String password){
         try {
             User user = userService.getUserByUsernameOrEmail(
                     username,
@@ -250,5 +212,98 @@ public class AuthService {
             throw new WrongCredentialsException();
         }
     }
+
+    // PUBLIC METHODS
+
+    /**
+     * Registers a new user with the specified authentication method.
+     *
+     * @param dto registration data including username, email, password, and auth method
+     * @return the created {@link UserAuthMethod} record
+     * @throws UserAlreadyExistsException if a user with the same username or email already exists
+     */
+    @Transactional
+    public UserAuthMethod registerUser(RegisterRequestDTO dto){
+        if (dto.getAuthMethod() == AuthMethod.SELF) {
+            return userService.createUserWithRegistrationMethod(
+                    dto.getUsername(),
+                    dto.getEmail(),
+                    passwordEncoder.encode(dto.getPassword()),
+                    Role.USER,
+                    AuthMethod.SELF
+            );
+        } else {
+            UserAuthMethod userAuthMethod = userService.createUserWithRegistrationMethod(
+                    dto.getUsername(),
+                    dto.getEmail(),
+                    "",
+                    Role.USER,
+                    AuthMethod.KEYCLOAK
+            );
+            User user = userAuthMethod.getUser();
+            keycloakRegister(
+                    dto.getUsername(),
+                    dto.getEmail(),
+                    dto.getPassword(),
+                    user.getId(),
+                    Role.USER
+            );
+            return userAuthMethod;
+        }
+    }
+
+    /**
+     * Links an additional authentication method to an existing user's account.
+     * Requires the user to be authenticated (JWT), so only the account owner can link methods.
+     *
+     * @param dto      the new auth method and its credentials
+     * @param userId   the authenticated user's ID (extracted from JWT)
+     * @return the created {@link UserAuthMethod} record
+     * @throws UserNotFoundException if the user does not exist
+     */
+    @Transactional
+    public UserAuthMethod linkAuthMethodForUser(LinkUserAuthMethodRequestDTO dto, UUID userId){
+        if (dto.getAuthMethod() == AuthMethod.SELF) {
+            return userService.updateUserWithRegistrationMethod(
+                userId,
+                passwordEncoder.encode(dto.getPassword()),
+                AuthMethod.SELF
+            );
+        } else {
+            UserAuthMethod userAuthMethod = userService.updateUserWithRegistrationMethod(
+                    userId,
+                    null,
+                    AuthMethod.KEYCLOAK
+            );
+            User linkedUser = userAuthMethod.getUser();
+            keycloakRegister(
+                    linkedUser.getUsername(),
+                    linkedUser.getEmail(),
+                    dto.getPassword(),
+                    linkedUser.getId(),
+                    linkedUser.getRole()
+            );
+            return userAuthMethod;
+        }
+    }
+
+
+    /**
+     * Authenticates a user and returns a JWT token.
+     * Delegates to the appropriate login method based on the requested auth method.
+     *
+     * @param dto login credentials including username, email, password, and auth method
+     * @return a {@link LoginResponseDTO} containing the JWT token
+     * @throws WrongCredentialsException if authentication fails
+     */
+    public LoginResponseDTO login(LoginRequestDTO dto){
+        if(dto.getAuthMethod().equals(AuthMethod.SELF)){
+            return selfLogin(dto.getUsername(), dto.getEmail(), dto.getPassword());
+        } else {
+            return keycloakLogin(dto.getUsername(), dto.getEmail(), dto.getPassword());
+        }
+    }
+
+
 
 }

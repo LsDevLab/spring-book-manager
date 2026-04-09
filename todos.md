@@ -202,11 +202,11 @@ A REST API where developers can manage their technical reading list — add book
 ## Phase 15 — GraphQL
 > Expose a GraphQL endpoint alongside REST — clients query exactly the fields they need
 
-- [ ] **15.1 Add Spring GraphQL starter** — Add spring-boot-starter-graphql, create the .graphqls schema file with Book, User, UserBook types *(depends on 3.2)*
+- [x] **15.1 Add Spring GraphQL starter** — Add spring-boot-starter-graphql, create the .graphqls schema file with Book, User, UserBook types *(depends on 3.2)*
     - `spring-boot-starter-graphql` `SDL schema` `type` `Query` `Mutation`
-- [ ] **15.2 Book queries and mutations** — Implement @QueryMapping for books (list, byId, search) and @MutationMapping for create/update/delete *(depends on 15.1)*
+- [x] **15.2 Book queries and mutations** — Implement @QueryMapping for books (list, byId, search) and @MutationMapping for create/update/delete *(depends on 15.1)*
     - `@QueryMapping` `@MutationMapping` `@Argument` `DataFetcher`
-- [ ] **15.3 Reading list queries with nested types** — Query a user's reading list with nested book details, let the client choose which fields to fetch *(depends on 15.2)*
+- [] **15.3 Reading list queries with nested types** — Query a user's reading list with nested book details, let the client choose which fields to fetch *(depends on 15.2)*
     - `nested types` `@SchemaMapping` `N+1 problem` `@BatchMapping`
 - [ ] **15.4 Secure GraphQL with Spring Security** — Apply authentication and role-based authorization to GraphQL operations *(depends on 15.3, 10.7)*
     - `@PreAuthorize on GraphQL` `SecurityContext in GraphQL` `query-level vs field-level auth`

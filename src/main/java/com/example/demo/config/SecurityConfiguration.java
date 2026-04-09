@@ -34,7 +34,9 @@ class SecurityConfiguration {
                         "/api/activity/**",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
-                        "/v3/api-docs/**"
+                        "/v3/api-docs/**",
+                        "/graphql",          // permit for now — will secure in 15.4
+                        "/graphiql"
                 ).permitAll()
                 .anyRequest().authenticated()                                   // everything else requires auth
             )

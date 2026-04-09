@@ -1,9 +1,6 @@
 package com.example.demo.security;
 
-import com.example.demo.exception.UserNotFoundException;
 import com.example.demo.model.Role;
-import com.example.demo.model.User;
-import com.example.demo.service.UserService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -32,7 +29,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtDecoder jwtDecoder;
-    private final UserService userService;
 
     @Value("${app.keycloak.issuer}")
     private String keycloakIssuer;
@@ -60,16 +56,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // Keycloak path — RSA validation via Spring's JwtDecoder.
     // jwtDecoder fetches Keycloak's public keys from the JWKS endpoint automatically.
+    //
+    // Role: from realm_access.roles (standard Keycloak claim — assigned during registration)
+    // userId: from app_user_id (custom claim via Protocol Mapper — Keycloak doesn't know our DB UUID)
+    // email: from email (standard Keycloak claim)
+    @SuppressWarnings("unchecked")
     private UsernamePasswordAuthenticationToken authenticateKeycloak(String token) {
         try {
             Jwt jwt = jwtDecoder.decode(token);
 
             String username = jwt.getClaimAsString("preferred_username");
             String email = jwt.getClaimAsString("email");
+            String userId = jwt.getClaimAsString("app_user_id");
 
-            // Keycloak nests roles under "realm_access.roles".
-            // It includes its own defaults like "default-roles-book-manager-realm",
-            // "offline_access", "uma_authorization" — we only want our app's roles.
+            // Role from realm_access.roles — Keycloak's standard way of embedding realm roles.
+            // We filter for our app roles (USER/ADMIN) since Keycloak also includes its own
+            // defaults like "offline_access", "uma_authorization", etc.
             Map<String, Object> realmAccess = jwt.getClaim("realm_access");
             List<String> roles = (List<String>) realmAccess.get("roles");
 
@@ -78,11 +80,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
                     .toList();
 
-            User user = userService.getUserByUsername(username);
-
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(username, null, authorities);
-            auth.setDetails(new AuthUserDetails(user.getId(), email));
+            auth.setDetails(new AuthUserDetails(UUID.fromString(userId), email));
             return auth;
         } catch (Exception e) {
             return null;

@@ -29,7 +29,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./keycloak/books-manager-realm.json:/opt/keycloak/data/import/books-manager-realm.json:ro
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/books-manager-realm.json:ro
 
 
 volumes:
