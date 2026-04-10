@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "srs-documentation",
+  "owner": "doubleslashse",
+  "repo": "claude-marketplace",
+  "path": "Plugins/business-analyst/skills/srs-documentation",
+  "branch": "main",
+  "sha": "3ec45a126010503fa9c4068c1947585a4bde3f18",
+  "source": "manual"
+}

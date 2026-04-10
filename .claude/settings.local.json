@@ -15,7 +15,16 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:pub.dev)",
       "WebFetch(domain:www.doveconviene.it)",
-      "WebFetch(domain:shopfully.com)"
+      "WebFetch(domain:shopfully.com)",
+      "Bash(mv plugins:*)",
+      "Bash(mv frontends/public-website frontends/website)",
+      "Bash(mv frontends/user-dashboard frontends/dashboard)",
+      "Bash(mv frontends/admin-panel frontends/admin)",
+      "Bash(mkdir -p frontends/carplay)",
+      "Bash(mv savestack-architecture.md savestack-architecture-EXPLORATION.md)",
+      "Bash(mv savestack-requirements.md savestack-requirements-EXPLORATION.md)",
+      "Bash(mv savestack-idea.md savestack-idea-EXPLORATION.md)",
+      "Bash(find:*)"
     ]
   }
 }
